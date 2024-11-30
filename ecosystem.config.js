@@ -1,0 +1,1 @@
+module.exports = { apps: [{ name: "ssl-api", script: "index.js", instances: 2, autorestart: true, watch: false }] }
