@@ -1,36 +1,86 @@
-# ssl-anywhere
-this is a proxy server
-need to redirect to a http server from https url? you can deploy this in a small server and url it to point to any url
+# SSL-Anywhere
 
+SSL-Anywhere is a lightweight HTTPS proxy server that enables secure access to HTTP endpoints. It serves as a bridge between HTTPS clients and HTTP servers, allowing you to maintain secure communication even when dealing with HTTP-only services.
 
-# commands for amazon linux 2023
+## Problem Statement
 
-# run pm2 or node
-# # pm2 ecosystem.config.js
-node index.js &
+Many legacy systems, internal services, or third-party APIs still operate over HTTP. However, modern security requirements often mandate HTTPS communication. SSL-Anywhere solves this challenge by providing a secure HTTPS endpoint that can safely proxy requests to HTTP services.
 
-# 1. Update system
-sudo dnf update -y
+## Features
 
-# 2. Install nginx
-sudo dnf install nginx -y
+- Seamless HTTPS to HTTP proxying
+- Preserves all HTTP methods (GET, POST, PUT, DELETE, etc.)
+- Maintains query parameters and request bodies
+- Forwards headers while ensuring proper host management
+- Supports streaming responses
+- Simple deployment and configuration
 
-# 3. Start and enable nginx
-sudo systemctl start nginx
-sudo systemctl enable nginx
+## Installation
 
+```bash
+# Clone the repository
+git clone https://github.com/arunsai63/ssl-anywhere.git
 
-# 4. Install certbot and nginx plugin
-sudo dnf install certbot python3-certbot-nginx -y
-sudo dnf install nodejs npm -y
+# Install dependencies
+cd ssl-anywhere
+npm install
+```
 
-# 5. Verify nginx is running
-sudo systemctl status nginx
+## Usage
 
-# 6. update ngnix.conf & restart 
+1. Start the server:
+```bash
+node server.js
+```
 
-# update dns record
-A record : ssl.customdomain.com : <ec2 public ip>
+2. Access HTTP endpoints through the proxy:
+```
+https://your-domain.com/http://target-service.com/api/endpoint
+```
 
-# To obtain SSL certificate
-sudo certbot --nginx -d ssl.customdomain.com -v
+Example:
+```javascript
+// Original HTTP request
+fetch('http://api.example.com/data')
+
+// Using SSL-Anywhere
+fetch('https://your-domain.com/http://api.example.com/data')
+```
+
+## Configuration
+
+The server runs on port 8005 by default. Modify the `PORT` constant in `server.js` to change this.
+
+For production deployment, we recommend using Nginx or similar as a reverse proxy to handle SSL termination.
+
+## Security Considerations
+
+- SSL-Anywhere does not perform certificate validation for target HTTP services
+- Ensure your deployment follows security best practices for proxy servers
+- Consider implementing request filtering and rate limiting for production use
+- Monitor proxy usage and implement appropriate access controls
+
+## Use Cases
+
+- Accessing HTTP-only APIs from HTTPS websites
+- Legacy system integration
+- Development and testing environments
+- Internal services requiring HTTPS compliance
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit pull requests.
+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Disclaimer
+
+This tool is provided as-is without any guarantees. Users should evaluate their security requirements before implementing in production environments.
