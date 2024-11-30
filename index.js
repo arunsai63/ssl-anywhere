@@ -1,32 +1,64 @@
-const express = require('express');
-const axios = require('axios');
+const express = require('express')
+const axios = require('axios')
 
-const app = express();
-app.use(express.json());
+const PORT = 8005
+const VALID_PROTOCOLS = ['http:', 'https:']
 
-app.all('*', async (req, res) => {
+const axiosInstance = axios.create({
+  validateStatus: () => true,
+  responseType: 'stream'
+})
+
+const isValidUrl = (url) => {
   try {
-    
-    const fullPath = req.path.substring(1);
-    const targetUrl = decodeURIComponent(fullPath);
-    
-    const response = await axios({
+    const { protocol } = new URL(url)
+    return VALID_PROTOCOLS.includes(protocol)
+  } catch {
+    return false
+  }
+}
+
+const forwardHeaders = (sourceHeaders, targetHost) => ({
+  ...sourceHeaders,
+  host: targetHost
+})
+
+const handleProxyRequest = async (req, res) => {
+  const targetUrl = decodeURIComponent(req.path.substring(1))
+  
+  if (!isValidUrl(targetUrl)) {
+    return res.status(418).json({ msg: 'invalid' })
+  }
+
+  try {
+    const { host } = new URL(targetUrl)
+    const response = await axiosInstance({
       method: req.method,
       url: targetUrl,
       data: req.body,
-      headers: {
-        ...req.headers,
-        host: new URL(targetUrl).host
-      },
-      params: req.query,
-      responseType: 'stream'
-    });
+      headers: forwardHeaders(req.headers, host),
+      params: req.query
+    })
 
-    res.status(response.status);
-    response.data.pipe(res);
+    res.status(response.status)
+    // Object.entries(response.headers).forEach(([key, value]) => {
+    //   res.set(key, value)
+    // })
+    response.data.pipe(res)
   } catch (error) {
-    res.status(error.response?.status || 500).send(error.message);
+    res.status(500).json({
+      error: 'Network Error',
+      message: error.message,
+      details: error.code || 'Unknown error'
+    })
   }
-});
-console.log("listening on port 8005")
-app.listen(8005);
+}
+
+
+const app = express()
+app.use(express.json())
+app.all('*', handleProxyRequest)
+
+app.listen(PORT, () => {
+  console.log(`Proxy server listening on port ${PORT}`)
+})
