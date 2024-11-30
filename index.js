@@ -1,8 +1,7 @@
 const express = require('express')
 const axios = require('axios')
 
-const PORT = 8005
-const VALID_PROTOCOLS = ['http:', 'https:']
+const PORT = process.env.PORT || 8005
 
 const axiosInstance = axios.create({
   validateStatus: () => true,
@@ -12,7 +11,7 @@ const axiosInstance = axios.create({
 const isValidUrl = (url) => {
   try {
     const { protocol } = new URL(url)
-    return VALID_PROTOCOLS.includes(protocol)
+    return protocol === "http:"
   } catch {
     return false
   }
